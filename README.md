@@ -116,8 +116,11 @@ make train      # 5-fold cross-validation
 make evaluate   # metrics, figures, threshold analysis
 ```
 
-`make data` needs a Kaggle API token at `~/.kaggle/kaggle.json` and acceptance
-of the competition rules. Everything else runs offline.
+`make data` needs Kaggle credentials and acceptance of the competition rules.
+The simplest route is `python -m kaggle auth login`, which caches credentials
+via OAuth with no token to manage; a token in `~/.kaggle/access_token`, the
+`KAGGLE_API_TOKEN` environment variable, or a legacy `~/.kaggle/kaggle.json`
+all work too. Everything else runs offline.
 
 On macOS, LightGBM additionally needs the OpenMP runtime: `brew install libomp`.
 
