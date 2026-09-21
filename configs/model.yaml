@@ -1,0 +1,46 @@
+# LightGBM configuration.
+#
+# Kept out of the code so that a hyperparameter change is a one-line diff in a
+# config file rather than an edit to the training logic, and so that the exact
+# settings behind a saved model are recorded alongside its metrics.
+
+lightgbm:
+  objective: binary
+  metric: auc
+  boosting_type: gbdt
+
+  # A low learning rate with early stopping finds a better optimum than a high
+  # one with a fixed round count; the extra trees cost seconds, not minutes.
+  learning_rate: 0.02
+  n_estimators: 10000
+
+  # Complexity controls. num_leaves is the main capacity dial in LightGBM's
+  # leaf-wise growth; it is kept well below 2^max_depth to avoid the deep,
+  # narrow trees that leaf-wise growth otherwise produces on a dataset with
+  # this much class imbalance.
+  num_leaves: 34
+  max_depth: 8
+  min_child_samples: 70
+
+  # Stochastic regularisation: each tree sees 87% of rows and 94% of columns,
+  # which decorrelates the ensemble.
+  subsample: 0.87
+  subsample_freq: 1
+  colsample_bytree: 0.94
+
+  reg_alpha: 0.04
+  reg_lambda: 0.07
+
+  # NOTE: is_unbalance / scale_pos_weight are deliberately *not* set.
+  # Reweighting the positive class improves nothing for a ranking metric like
+  # AUC, and it destroys probability calibration — which this project needs
+  # intact, because the decision threshold is derived from expected cost.
+  # Imbalance is handled at the decision layer, not the loss function.
+
+  n_jobs: -1
+  verbose: -1
+
+training:
+  n_folds: 5
+  early_stopping_rounds: 200
+  log_evaluation_period: 200
