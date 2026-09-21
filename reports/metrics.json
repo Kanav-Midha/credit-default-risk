@@ -1,0 +1,32 @@
+{
+  "discrimination_and_calibration": {
+    "roc_auc": 0.7774155736991779,
+    "gini": 0.5548311473983558,
+    "pr_auc": 0.2673920453641455,
+    "ks_statistic": 0.4166286691696233,
+    "ks_threshold": 0.079994339202724,
+    "brier_score": 0.06662992655544282,
+    "expected_calibration_error": 0.003072215977400441,
+    "lift_at_10pct": 3.5806297203902977,
+    "default_rate": 0.08072986956394489,
+    "n_samples": 307507
+  },
+  "assumptions": {
+    "lgd": 0.65,
+    "profit_margin": 0.12
+  },
+  "decision_policy": {
+    "threshold": 0.14968216133247125,
+    "approval_rate": 0.8570341488161245,
+    "bad_rate_of_approved": 0.05175606350362748,
+    "defaults_caught": 0.45055387713997985,
+    "good_customers_rejected": 0.11595361572367537
+  },
+  "portfolio_impact": {
+    "cost_approve_everyone": 9000453767.175001,
+    "cost_under_policy": 7311289174.65,
+    "savings": 1689164592.5250015,
+    "savings_pct": 0.18767549239411122,
+    "savings_per_applicant": 5493.093141050453
+  }
+}

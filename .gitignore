@@ -4,19 +4,26 @@ data/interim/*
 data/processed/*
 !data/**/.gitkeep
 
-# Model artefacts
+# Model artefacts. Boosters (~25 MB) and OOF predictions are regenerable
+# from `make train`; the small metric files are the evidence for the README
+# and are tracked.
 models/*
 !models/.gitkeep
+!models/cv_metrics.json
+!models/feature_importance.csv
 *.pkl
 *.joblib
 *.txt.model
 
-# Reports: keep figures + metrics (small, reviewable), drop the rest
+# Reports: keep figures and metric files (small, reviewable), drop the rest.
 reports/*
-!reports/figures/
 !reports/.gitkeep
+!reports/figures/
+!reports/metrics.json
+!reports/sensitivity.csv
 reports/figures/*
 !reports/figures/.gitkeep
+!reports/figures/*.png
 
 # Python
 __pycache__/

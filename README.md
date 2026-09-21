@@ -9,10 +9,10 @@ actually act on — calibrated probabilities, a decision threshold derived from
 the cost of being wrong, and an audit trail explaining why any given applicant
 was declined.
 
-> **Status:** in active development. Results below are populated by
-> `make evaluate` and are absent until the corresponding stage has been run and
-> committed. No number appears in this README that was not produced by code in
-> this repository.
+> Every number below was produced by code in this repository and can be
+> regenerated with `make features && make train && make evaluate`. The raw
+> outputs are tracked in [`reports/metrics.json`](reports/metrics.json) and
+> [`models/cv_metrics.json`](models/cv_metrics.json).
 
 ---
 
@@ -75,16 +75,65 @@ depends on. Imbalance is handled at the decision layer instead — see
 
 ## Results
 
-Populated from `models/cv_metrics.json` once training has been run.
+5-fold stratified cross-validation on 307,507 applications, 223 features.
+All figures are out-of-fold.
 
-| Metric | Out-of-fold | Notes |
+| Metric | Value | Reading |
 |---|---|---|
-| ROC-AUC | _pending_ | Competition metric; winning solutions reached ~0.805 |
-| Gini | _pending_ | `2 × AUC − 1`, the industry-standard form |
-| PR-AUC | _pending_ | No-skill floor is the 8.1% base rate |
-| KS statistic | _pending_ | Regulatory scorecard-strength metric |
-| Brier / ECE | _pending_ | Calibration |
-| Expected loss reduction | _pending_ | vs. approving every applicant |
+| **ROC-AUC** | **0.7774** ± 0.0041 | Competition winners reached ~0.805 using all seven tables and large ensembles |
+| **Gini** | **0.5548** | Above the ~0.5 that is considered a strong application scorecard |
+| **PR-AUC** | **0.2674** | 3.3× the 0.0807 no-skill floor |
+| **KS statistic** | **0.4166** | Comfortably inside the 0.4–0.5 band expected of a production scorecard |
+| **Brier score** | 0.0666 | |
+| **ECE** | **0.0031** | Predictions are off by ~0.3 percentage points on average |
+| **Lift at 10%** | **3.58×** | The riskiest decile defaults at 3.6× the portfolio rate |
+
+Fold AUCs: 0.7728, 0.7833, 0.7756, 0.7813, 0.7743.
+
+### The decision policy
+
+Minimising expected cost puts the decline threshold at **0.1497**, not 0.5:
+
+| | Approve everyone | Cost-optimal policy |
+|---|---|---|
+| Approval rate | 100% | 85.7% |
+| Default rate on the approved book | 8.07% | **5.18%** |
+| Defaults avoided | — | 45.1% |
+| Good customers turned away | — | 11.6% |
+| **Expected loss** | baseline | **−18.8%** |
+
+The model identifies **45% of all defaults** while declining only **14% of
+applicants**, cutting the bad rate on the approved book by roughly a third.
+
+Under the central assumptions (LGD 0.65, margin 0.12) that is a **18.8%**
+reduction in expected loss. Across the full 5×5 sensitivity grid the saving
+stays positive in **25 of 25** combinations, ranging from 4.7% to 37.0% — so
+the conclusion is a property of the model, not of the assumed constants. See
+[`reports/sensitivity.csv`](reports/sensitivity.csv).
+
+### Figures
+
+| | |
+|---|---|
+| ![ROC curve](reports/figures/roc_curve.png) | ![Precision-recall](reports/figures/precision_recall_curve.png) |
+| ![Calibration](reports/figures/calibration.png) | ![Cost vs threshold](reports/figures/cost_vs_threshold.png) |
+
+The reliability diagram tracks the diagonal closely, which is what licenses
+the expected-loss calculation: a predicted 10% really does default about 10%
+of the time. The cost curve shows how far the optimum sits from the naive 0.5
+cutoff — at 0.5 the model declines almost nobody and saves almost nothing.
+
+### What the model leans on
+
+`EXT_SOURCE_MEAN` — the average of three external bureau scores — dominates by
+gain, followed by `ORGANIZATION_TYPE` and `CREDIT_TERM` (the implied loan term,
+an engineered ratio). Of the top 20 features, 8 are engineered rather than raw.
+
+This is worth stating plainly: a large share of the model's power comes from
+other institutions' credit scores. A lender without access to those would see
+materially worse performance, and any assessment of this model has to account
+for that dependency. Full ranking in
+[`models/feature_importance.csv`](models/feature_importance.csv).
 
 ## Project structure
 
@@ -144,7 +193,7 @@ it just quietly degrades the model.
 - [x] Imbalance-aware and calibration metrics
 - [x] Cost-based threshold optimisation
 - [ ] `previous_application`, `installments_payments`, `credit_card_balance` aggregates
-- [ ] Probability calibration (isotonic / Platt) with reliability curves
+- [x] Reliability diagnostics (ECE 0.0031 — recalibration not currently warranted)
 - [ ] SHAP-based global and per-applicant explanations
 - [ ] Fairness audit across age and gender slices
 - [ ] Hyperparameter search with Optuna
