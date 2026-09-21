@@ -90,6 +90,29 @@ this range, and X under the central one". If any cell in that grid showed a
 loss, the headline number would be an artefact of the assumption rather than a
 property of the model.
 
+## Findings worth recording
+
+**The sentinel flag turned out to be redundant.** `clean_application` records
+`DAYS_EMPLOYED_IS_SENTINEL` before nulling the value, on the reasoning that
+"unemployed" is different information from "tenure unknown". That reasoning is
+sound, but the flag ranks 213th of 223 features by gain — near the bottom.
+
+The explanation is that LightGBM handles NaN natively: it learns a default
+direction for missing values at each split, which recovers the same signal the
+flag was added to preserve. The flag is kept because it costs nothing and would
+matter for a model without native NaN handling (logistic regression, most
+scikit-learn estimators), but it is not doing work here.
+
+The sentinel *decoding* remains essential — that is a separate thing from the
+flag. Leaving 365243 in place would have it treated as a genuine tenure of a
+thousand years.
+
+**The sentinel group is lower risk, not higher.** Applicants with the sentinel
+value default at 5.40% against 8.66% for everyone else. These are largely
+pensioners, whose income is stable and predictable. A reasonable prior before
+looking would have been the opposite, which is a useful reminder that
+"missing" does not imply "worse".
+
 ## What would invalidate the results
 
 - **A temporal split showing materially worse performance.** Likely, and the
