@@ -42,7 +42,9 @@ def reduce_memory_usage(df: pd.DataFrame, verbose: bool = False) -> pd.DataFrame
     for col in out.columns:
         col_type = out[col].dtype
 
-        if pd.api.types.is_object_dtype(col_type) or isinstance(col_type, pd.CategoricalDtype):
+        # Only numeric columns can be downcast. Testing for object dtype is
+        # not enough on pandas 3, where strings have a dtype of their own.
+        if not pd.api.types.is_numeric_dtype(col_type) or pd.api.types.is_bool_dtype(col_type):
             continue
 
         c_min, c_max = out[col].min(), out[col].max()

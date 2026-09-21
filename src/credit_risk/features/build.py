@@ -21,15 +21,29 @@ from credit_risk.features.bureau import build_bureau_features
 
 
 def encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert object columns to pandas ``category`` dtype.
+    """Convert text columns to pandas ``category`` dtype.
 
     LightGBM consumes the category dtype directly and finds optimal splits over
     category subsets. That beats one-hot encoding on this data: several columns
     (``ORGANIZATION_TYPE``, 58 levels) would explode the feature count, and it
     beats ordinal encoding, which invents a false ordering between levels.
+
+    Columns are selected by what they are *not* rather than by asking for
+    ``object``. Pandas 3 gives strings their own dtype, so ``select_dtypes
+    (include="object")`` is deprecated and its meaning differs between 2.x and
+    3.x; this form behaves identically on both.
     """
     out = df.copy()
-    for col in out.select_dtypes(include="object").columns:
+    for col in out.columns:
+        dtype = out[col].dtype
+        if isinstance(dtype, pd.CategoricalDtype):
+            continue
+        if (
+            pd.api.types.is_numeric_dtype(dtype)
+            or pd.api.types.is_bool_dtype(dtype)
+            or pd.api.types.is_datetime64_any_dtype(dtype)
+        ):
+            continue
         out[col] = out[col].astype("category")
     return out
 

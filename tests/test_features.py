@@ -7,6 +7,8 @@ only a test like these catches it.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -18,6 +20,7 @@ from credit_risk.features.application import (
     build_application_features,
     clean_application,
 )
+from credit_risk.features.build import encode_categoricals
 from credit_risk.features.bureau import aggregate_bureau_balance, build_bureau_features
 
 
@@ -173,3 +176,43 @@ class TestBureauFeatures:
         out = build_bureau_features(bureau_df, bureau_balance=None)
         assert "BUREAU_CREDIT_COUNT" in out.columns
         assert not any(c.startswith("BUREAU_BB_") for c in out.columns)
+
+
+class TestEncodeCategoricals:
+    """Pandas 3 gave strings their own dtype, so selecting by `object` no
+    longer means what it used to. These pin the behaviour across versions."""
+
+    def test_text_columns_become_categorical(self):
+        df = pd.DataFrame({"name": ["a", "b", "a"], "n": [1, 2, 3]})
+        out = encode_categoricals(df)
+        assert isinstance(out["name"].dtype, pd.CategoricalDtype)
+
+    def test_numeric_bool_and_datetime_are_left_alone(self):
+        df = pd.DataFrame(
+            {
+                "i": [1, 2],
+                "f": [1.5, 2.5],
+                "b": [True, False],
+                "t": pd.to_datetime(["2024-01-01", "2024-01-02"]),
+            }
+        )
+        out = encode_categoricals(df)
+        for col in df.columns:
+            assert not isinstance(out[col].dtype, pd.CategoricalDtype), col
+
+    def test_already_categorical_columns_are_untouched(self):
+        df = pd.DataFrame({"c": pd.Categorical(["x", "y"], categories=["x", "y", "z"])})
+        out = encode_categoricals(df)
+        assert list(out["c"].cat.categories) == ["x", "y", "z"]
+
+    def test_emits_no_deprecation_warnings(self):
+        """The failure this guards against is a warning, not an exception."""
+        df = pd.DataFrame({"name": ["a", "b"], "n": [1, 2]})
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            encode_categoricals(df)
+
+    def test_values_survive_the_conversion(self):
+        df = pd.DataFrame({"name": ["a", "b", "a"]})
+        out = encode_categoricals(df)
+        assert list(out["name"].astype(str)) == ["a", "b", "a"]
