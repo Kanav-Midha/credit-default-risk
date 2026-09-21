@@ -1,0 +1,55 @@
+# Data — never commit. Reproduce with `make data`.
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# Model artefacts
+models/*
+!models/.gitkeep
+*.pkl
+*.joblib
+*.txt.model
+
+# Reports: keep figures + metrics (small, reviewable), drop the rest
+reports/*
+!reports/figures/
+!reports/.gitkeep
+reports/figures/*
+!reports/figures/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+.ipynb_checkpoints/
+mlruns/
+optuna.db
+
+# Secrets
+.env
+kaggle.json
+*.pem
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Personal study notes — not part of the deliverable
+LEARNING_PLAN.md
+NOTES/
